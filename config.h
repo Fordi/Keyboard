@@ -27,7 +27,7 @@
 // keyboard routine.
 
 // If this line is commented out, the scanner will only scan bottom-up
-#define DIODES
+// #define DIODES
 
 // If you're on a Mac, uncomment this line
 // #define MAC
