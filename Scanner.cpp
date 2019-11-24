@@ -111,7 +111,6 @@ void identify(void) {
   Keyboard.press(MODIFIERKEY_LEFT_SHIFT);
   to_eol();
   Keyboard.release(MODIFIERKEY_LEFT_SHIFT);
-  tap(KEY_BACKSPACE);
   // Print the board type
 #ifdef TEENSY32
   Keyboard.print("Teensy32");
