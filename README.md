@@ -12,9 +12,11 @@ https://www.instructables.com/id/How-to-Make-a-USB-Laptop-Keyboard-Controller/
 2. Configuration
 
     1. Make sure [keymap.h](./keymap.h) is effectively empty (but exists)
-    2. Open [config.h](./config.h) in a text editor, and comment / uncomment
-      `#define DIODES` based on what you know about your matrix.  If you're
-      unsure, leave it on.
+    2. Open [config.h](./config.h) in a text editor
+        1. comment / uncomment `#define DIODES` based on what you know about
+          your matrix.  If you're unsure, leave it on.
+        2. comment / uncomment `#define MAC` based on what host system you'll
+          be scanning your keyboard on.
 
 3. Scan
 
