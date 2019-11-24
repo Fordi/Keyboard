@@ -31,7 +31,7 @@ const PINS = {
   TEENSY32: [23, 0, 22, 1, 21, 2, 20, 3, 19, 4, 18, 5, 17, 6, 24, 7, 25, 8, 33, 9, 26, 10, 27, 11, 28, 12, 32, 31, 30, 29, 16, 15, 14, 13],
 };
 
-let teensyPins = teensyLCPins;
+let teensyPins = PINS.TEENSYLC;
 
 const buffer = [];
 const keyMap = keyList.split('\n').reduce((matrix, l) => {

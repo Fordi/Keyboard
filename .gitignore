@@ -1,3 +1,4 @@
 *.log
 scancodes.txt
 config.h
+keymap.h
