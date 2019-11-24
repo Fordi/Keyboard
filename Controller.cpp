@@ -23,11 +23,21 @@
 // - Switch to LED_BUILTIN for keyboard LED
 // - pull non-generic code into a config file
 // - Improve readbility of code
+// pinMode, etc.
 
+#include <Arduino.h>
+// Teensy USB Keyboard object
+#include <usb_keyboard.h>
+
+// Exported functions
+#include "Controller.h"
+
+// User configuration
 #include "config.h"
-#include "keymap.h"
 
-#ifdef KEYMAP_H
+// Utility functions
+#include "utility.h"
+
 
 // Convenience constants
 #define TRUE (1==1)
@@ -40,7 +50,7 @@
 int slots[6] = { 0, 0, 0, 0, 0, 0 };
 
 // Stores states of existing keys, so we can track rising / falling edge
-int old_key[MATRIX_ROWS][MATRIX_COLS];
+bool *old_key;
 
 // Holds the current modifier state
 int modifier_state = 0;
@@ -48,7 +58,7 @@ int modifier_state = 0;
 // Load the key name into the first available slot
 // If all slots are full, this will do effectively nothing.
 void set_key(int key) {
-  for (int index = 0; index < SLOT_COUNT; index++) {
+  for (int index = 0; index < 6; index++) {
     if (slots[index] == 0) {
       slots[index] = key;
       break;
@@ -59,9 +69,9 @@ void set_key(int key) {
 // Clear the slot that contains the key name
 // If the key isn't present, this will do nothing.
 void reset_key(int key) {
-  for (int index = 0; index < SLOT_COUNT; index++) {
-    if (slot[index] == key) {
-      slot[index] = 0;
+  for (int index = 0; index < 6; index++) {
+    if (slots[index] == key) {
+      slots[index] = 0;
       break;
     }
   }
@@ -89,28 +99,23 @@ void send_keys() {
   Keyboard.set_key6(slots[5]);
 }
 
-// Set a pin mode and state
-void set_pin(int pin, int mode, int state) {
-  pinMode(pin, mode);
-  digitalWrite(pin, state);
-}
-
 //----------------------------------Setup-------------------------------------------
-void keyboard_init() {
-  for (int col = 0; col < MATRIX_COLS; col++) {
+void controller_init(int rows, int cols, int* row_pins, int* col_pins) {
+  old_key = (bool*) malloc(rows * cols * sizeof(bool));
+  for (int col = 0; col < cols; col++) {
     // Set column pin to input_pullup / high
-    set_pin(Col_IO[col], INPUT_PULLUP, HIGH);
+    set_pin(col_pins[col], INPUT_PULLUP, HIGH);
   }
 
-  for (int row = 0; row < MATRIX_ROWS; row++) {
+  for (int row = 0; row < rows; row++) {
     // Set row pin to high impedance
-    set_pin(Row_IO[row], INPUT, HIGH);
-    for (int row = 0; row < MATRIX_ROWS; row++) {
+    set_pin(row_pins[row], INPUT, HIGH);
+    for (int col = 0; row < cols; col++) {
+      int index = row * cols + col;
       // Initialize old_key
-      old_key[row][col] = FALSE;
+      old_key[index] = FALSE;
     }
   }
-
 }
 
 // Initialize Fn key to 0 = "not pressed"
@@ -120,7 +125,7 @@ boolean fn_pressed = FALSE;
 extern volatile uint8_t keyboard_leds;
 
 //---------------------------------Main Loop---------------------------------------------
-void keyboard_loop() {
+void controller_loop(int rows, int cols, int* normal, int* modifier, int* fn_keys, int* row_pins, int* col_pins) {
 
 // Scan keyboard matrix with an outer loop that drives each row low and an
 // inner loop that reads every column (with pull ups). The routine looks
@@ -129,40 +134,42 @@ void keyboard_loop() {
 // of a key that was just pressed or just released is sent over USB and
 // the state is saved in the old_key matrix.
 
-  for (int x = 0; x < MATRIX_ROWS; x++) {
+  for (int x = 0; x < rows; x++) {
     // Activate Row by pulling it to ground
-    set_pin(Row_IO[x], OUTPUT, LOW);
+    set_pin(row_pins[x], OUTPUT, LOW);
     // give the row time to go low and settle out
     delayMicroseconds(10);
-    for (int y = 0; y < MATRIX_COLS; y++) {
+    for (int y = 0; y < cols; y++) {
+      int index = x * cols + y;
       // Keys are active LOW
-      boolean down = digitalRead(Col_IO[y]) == LOW;
+      boolean down = digitalRead(col_pins[y]) == LOW;
 
-      boolean just_pressed = down && old_key[x][y];
-      boolean just_released = !down && old_key[x][y];
+      boolean just_pressed = down && old_key[index];
+      boolean just_released = !down && old_key[index];
 
       // In whatever case, track the state of the matrix.
       if (just_pressed) {
-        old_key[x][y] = TRUE;
+        old_key[index] = TRUE;
       } else if (just_released) {
-        old_key[x][y] = FALSE;
+        old_key[index] = FALSE;
       }
+      // Calculate the index into the matrix from its coordinates
 
       // # Handle modifiers
-      if (modifier[x][y] != 0) {
+      if (modifier[index] != 0) {
         if (just_pressed) {
           // Handle Fn modifier key internally
-          if (modifier[x][y] == MODIFIERKEY_FN) {
+          if (modifier[index] == MODIFIERKEY_FN) {
             fn_pressed = TRUE;
           } else {
-            set_modifier(modifier[x][y]);
+            set_modifier(modifier[index]);
           }
         } else if (just_released) {
           // Handle Fn modifier key internally
-          if (modifier[x][y] == MODIFIERKEY_FN) {
+          if (modifier[index] == MODIFIERKEY_FN) {
             fn_pressed = FALSE;
           } else {
-            reset_modifier(modifier[x][y]);
+            reset_modifier(modifier[index]);
           }
         }
       }
@@ -172,18 +179,18 @@ void keyboard_loop() {
 
       // # Fn-modified keys (media)
       if (fn_pressed) {
-        if (media[x][y] != 0) {
+        if (fn_keys[index] != 0) {
           if (just_pressed) {
             #ifdef USE_SET_MEDIA
-              Keyboard.set_media(media[x][y]);
+              Keyboard.set_media(medfn_keysia[index]);
             #else
-              set_key(media[x][y]);
+              set_key(fn_keys[index]);
             #endif
           } else if (just_released) {
             #ifdef USE_SET_MEDIA
               Keyboard.set_media(0);
             #else
-              reset_key(media[x][y]);
+              reset_key(fn_keys[index]);
             #endif
           }
         }
@@ -193,18 +200,18 @@ void keyboard_loop() {
       else
 
       // # Normal keys
-      if (normal[x][y] != 0) {
+      if (normal[index] != 0) {
         if (just_pressed) {
-          set_key(normal[x][y]);
+          set_key(normal[index]);
         } else if (just_released) {
-          reset_key(normal[x][y]);
+          reset_key(normal[index]);
         }
       }
       // # end normal keys
 
     }
     // De-activate Row (send it to hi-impedance)
-    set_pin(Row_IO[x], INPUT, HIGH);
+    set_pin(row_pins[x], INPUT, HIGH);
   }
   // Scan complete; send scanned state.
   Keyboard.send_now();
@@ -224,4 +231,3 @@ void keyboard_loop() {
 
   delay(25);
 }
-#endif

@@ -32,12 +32,21 @@
 //    Made use of Teensy features to simplify code
 //    Added short detection
 //    Split user-config and board-config out into headers
+
+#include <Arduino.h>
 #include <elapsedMillis.h>
+
+
+// Common functions
+#include "utility.h"
 
 // Board configuration
 #include "Teensy.h"
+
 // User configuration
 #include "config.h"
+
+// Exported functions
 #include "Scanner.h"
 
 // This array will hold per-pin enabled / disabled state.  Pins will be disabled if a short is detected
@@ -54,13 +63,6 @@ int scan_count = 0;
 
 // State of the microcontroller's built-in LED; this should switch once every 10 scans.
 bool heartbeat_state = LOW;
-
-
-// Set the mode and state of a pin.
-void set_pin(int pin, int mode, int state) {
-  pinMode(pin, mode);
-  digitalWrite(pin, state);
-}
 
 // Tap a key
 void tap(int key) {

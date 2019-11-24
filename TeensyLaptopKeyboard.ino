@@ -5,10 +5,10 @@
   #include "Controller.h"
   #warning "keymap.h is populated; building in CONTROLLER mode.  Empty out keymap.h if you need to re-scan."
   void setup() {
-    controller_setup();
+    controller_init(MATRIX_ROWS, MATRIX_COLS, (int*)Row_IO, (int*)Col_IO);
   }
   void loop() {
-    controller_loop();
+    controller_loop(MATRIX_ROWS, MATRIX_COLS, (int*)normal, (int*)modifier, (int*)fn_keys, (int*)Row_IO, (int*)Col_IO);
   }
 #else
   #include "Scanner.h"

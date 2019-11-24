@@ -91,8 +91,10 @@ if (open.length) {
 }
 
 buffer.push(`#ifndef KEYMAP_H\n#define KEYMAP_H`);
-buffer.push(`const byte MATRIX_ROWS = ${inputs.length};`);
-buffer.push(`const byte MATRIX_COLS = ${outputs.length};`);
+buffer.push(`#include <keylayouts.h>`);
+buffer.push(`#define MODIFIERKEY_FN 0x8f`);
+buffer.push(`#define MATRIX_ROWS ${inputs.length}`);
+buffer.push(`#define MATRIX_COLS ${outputs.length}`);
 
 buffer.push(
   'int normal[MATRIX_ROWS][MATRIX_COLS] = {\n\t' +
