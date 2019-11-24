@@ -35,7 +35,8 @@ https://www.instructables.com/id/How-to-Make-a-USB-Laptop-Keyboard-Controller/
       - If you're not pressing any keys, and you see an unlikely short (e.g.,
         `1 26 Shorted`) appear, that's probably OK, as they're likely to be a
         common ground.  The scanner will exclude those pins from further
-        consideration.
+        consideration.  Delete the inserted text, uncomment the line, and
+        start scanning.
       - If you're not pressing any keys and you see a likely short appear (e.g.,
         `7 8 Shorted`), check your soldering work on those two FPC pins.
 
@@ -52,4 +53,3 @@ https://www.instructables.com/id/How-to-Make-a-USB-Laptop-Keyboard-Controller/
 
   - If you need further help, open an issue on this github project, and I'll see
     what I can help with.
-    
