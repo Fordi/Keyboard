@@ -14,9 +14,13 @@ https://www.instructables.com/id/How-to-Make-a-USB-Laptop-Keyboard-Controller/
     1. Make sure [keymap.h](./keymap.h) is effectively empty (but exists)
     2. Open [config.h](./config.h) in a text editor
         1. comment / uncomment `#define DIODES` based on what you know about
-          your matrix.  If you're unsure, leave it on.
+          your matrix.  This tells the scanner if the keyboard matrix has diodes
+          in it.  If you're unsure, leave it on, at least until you've ensured
+          your connections are all sound.  For an un-dioded matrix, however,
+          this will result in out-of-order scans, which can cause problems later.
         2. comment / uncomment `#define MAC` based on what host system you'll
-          be scanning your keyboard on.
+          be scanning your keyboard on.  This tells the scanner how to go to
+          the start / end of a line in an editor when reporting.
 
 3. Scan
 
