@@ -24,6 +24,11 @@
 // - pull non-generic code into a config file
 // - Improve readbility of code
 
+#include "config.h"
+#include "keymap.h"
+
+#ifdef KEYMAP_H
+
 // Convenience constants
 #define TRUE (1==1)
 #define FALSE (1==0)
@@ -35,7 +40,7 @@
 int slots[6] = { 0, 0, 0, 0, 0, 0 };
 
 // Stores states of existing keys, so we can track rising / falling edge
-boolean old_key[MATRIX_ROWS][MATRIX_COLS];
+int old_key[MATRIX_ROWS][MATRIX_COLS];
 
 // Holds the current modifier state
 int modifier_state = 0;
@@ -219,3 +224,4 @@ void keyboard_loop() {
 
   delay(25);
 }
+#endif

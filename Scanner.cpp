@@ -32,9 +32,11 @@
 //    Made use of Teensy features to simplify code
 //    Added short detection
 //    Split user-config and board-config out into headers
+#include <elapsedMillis.h>
 
 // Board configuration
 #include "Teensy.h"
+// User configuration
 #include "config.h"
 #include "Scanner.h"
 
@@ -51,7 +53,7 @@ elapsedMillis hold_time = 0;
 int scan_count = 0;
 
 // State of the microcontroller's built-in LED; this should switch once every 10 scans.
-boolean heartbeat_state = LOW;
+bool heartbeat_state = LOW;
 
 
 // Set the mode and state of a pin.
@@ -162,7 +164,7 @@ void scan_matrix(int from, int to) {
           if (hold_time >= MAX_HOLD_TIME) {
             // Comment out the current line
             to_sol();
-            Keyboard.print('# ');
+            Keyboard.print("# ");
             to_eol();
             tap(KEY_TAB);
             // Mark as shorted
