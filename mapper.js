@@ -123,7 +123,7 @@ buffer.push(
     '\n};'
 );
 buffer.push(
-    'int media[MATRIX_ROWS][MATRIX_COLS] = {\n\t' +
+    'int fn_keys[MATRIX_ROWS][MATRIX_COLS] = {\n\t' +
     inputs.map(low => {
        return '{ ' + outputs.map(high => {
            const key = keyMap[low][high];

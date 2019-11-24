@@ -110,7 +110,7 @@ void controller_init(int rows, int cols, int* row_pins, int* col_pins) {
   for (int row = 0; row < rows; row++) {
     // Set row pin to high impedance
     set_pin(row_pins[row], INPUT, HIGH);
-    for (int col = 0; row < cols; col++) {
+    for (int col = 0; col < cols; col++) {
       int index = row * cols + col;
       // Initialize old_key
       old_key[index] = FALSE;
@@ -134,15 +134,15 @@ void controller_loop(int rows, int cols, int* normal, int* modifier, int* fn_key
 // of a key that was just pressed or just released is sent over USB and
 // the state is saved in the old_key matrix.
 
-  for (int x = 0; x < rows; x++) {
+  for (int row = 0; row < rows; row++) {
     // Activate Row by pulling it to ground
-    set_pin(row_pins[x], OUTPUT, LOW);
+    set_pin(row_pins[row], OUTPUT, LOW);
     // give the row time to go low and settle out
     delayMicroseconds(10);
-    for (int y = 0; y < cols; y++) {
-      int index = x * cols + y;
+    for (int col = 0; col < cols; col++) {
+      int index = row * cols + col;
       // Keys are active LOW
-      boolean down = digitalRead(col_pins[y]) == LOW;
+      boolean down = digitalRead(col_pins[col]) == LOW;
 
       boolean just_pressed = down && old_key[index];
       boolean just_released = !down && old_key[index];
@@ -211,7 +211,7 @@ void controller_loop(int rows, int cols, int* normal, int* modifier, int* fn_key
 
     }
     // De-activate Row (send it to hi-impedance)
-    set_pin(row_pins[x], INPUT, HIGH);
+    set_pin(row_pins[row], INPUT, HIGH);
   }
   // Scan complete; send scanned state.
   Keyboard.send_now();
