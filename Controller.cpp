@@ -97,6 +97,7 @@ void send_keys() {
   Keyboard.set_key4(slots[3]);
   Keyboard.set_key5(slots[4]);
   Keyboard.set_key6(slots[5]);
+  Keyboard.send_now();
 }
 
 //----------------------------------Setup-------------------------------------------
@@ -127,12 +128,12 @@ extern volatile uint8_t keyboard_leds;
 //---------------------------------Main Loop---------------------------------------------
 void controller_loop(int rows, int cols, int* normal, int* modifier, int* media, int* row_pins, int* col_pins) {
 
-// Scan keyboard matrix with an outer loop that drives each row low and an
-// inner loop that reads every column (with pull ups). The routine looks
-// at each key's present state (by reading the column input pin) and also
-// the previous state from the last scan that was 30msec ago. The status
-// of a key that was just pressed or just released is sent over USB and
-// the state is saved in the old_key matrix.
+  // Scan keyboard matrix with an outer loop that drives each row low and an
+  // inner loop that reads every column (with pull ups). The routine looks
+  // at each key's present state (by reading the column input pin) and also
+  // the previous state from the last scan that was 30msec ago. The status
+  // of a key that was just pressed or just released is sent over USB and
+  // the state is saved in the old_key matrix.
 
   for (int row = 0; row < rows; row++) {
     // Activate Row by pulling it to ground
@@ -140,12 +141,14 @@ void controller_loop(int rows, int cols, int* normal, int* modifier, int* media,
     // give the row time to go low and settle out
     delayMicroseconds(10);
     for (int col = 0; col < cols; col++) {
+      // Calculate the index into the matrix from its coordinates
       int index = row * cols + col;
+
       // Keys are active LOW
       boolean down = digitalRead(col_pins[col]) == LOW;
 
-      boolean just_pressed = down && old_key[index];
-      boolean just_released = !down && old_key[index];
+      boolean just_pressed = down && old_key[index] == FALSE;
+      boolean just_released = !down && old_key[index] == TRUE;
 
       // In whatever case, track the state of the matrix.
       if (just_pressed) {
@@ -153,7 +156,6 @@ void controller_loop(int rows, int cols, int* normal, int* modifier, int* media,
       } else if (just_released) {
         old_key[index] = FALSE;
       }
-      // Calculate the index into the matrix from its coordinates
 
       // # Handle modifiers
       if (modifier[index] != 0) {
@@ -174,7 +176,6 @@ void controller_loop(int rows, int cols, int* normal, int* modifier, int* media,
         }
       }
       // # end of modifiers
-
       else
 
       // # Fn-modified keys (media)
@@ -214,7 +215,7 @@ void controller_loop(int rows, int cols, int* normal, int* modifier, int* media,
     set_pin(row_pins[row], INPUT, HIGH);
   }
   // Scan complete; send scanned state.
-  Keyboard.send_now();
+  send_keys();
 
   // Switch on the LED on the Teensy for Caps Lock based on bit 1 in
   // the keyboard_leds variable controlled by the USB host computer
