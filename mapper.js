@@ -2,19 +2,19 @@ const fs = require('fs');
 const path = require('path');
 
 const usage = (err = null) => {
-    console.log('Matrix scan decoder');
-    if (err) {
-        console.error(`!!! ${err}`);
-    }
-    console.log(`  Usage: node ${require('path').basename(process.argv[1])} [scancodes.txt]`);
-    console.log(`  Generates a config.h from a scancode list`);
-    console.log(`  Scancode lines should be a tab-delimited file with columns`);
-    console.log(`    KEY_NAME	[FN]	PIN1	PIN2`);
-    console.log(`    'FN' is optional and, if present, marks the key as alternate, triggered by the Fn key`);
-    console.log(`  Keys without pins are ignored`);
-    console.log(`  Lines starting with '#' are ignored`);
-    console.log(`You may switch between Teensy3.2 and TeensyLC by adding  the type as a line.`);
-    process.exit(-1);
+  console.log('Matrix scan decoder');
+  if (err) {
+    console.error(`!!! ${err}`);
+  }
+  console.log(`  Usage: node ${require('path').basename(process.argv[1])} [scancodes.txt]`);
+  console.log(`  Generates a config.h from a scancode list`);
+  console.log(`  Scancode lines should be a tab-delimited file with columns`);
+  console.log(`    KEY_NAME	[FN]	PIN1	PIN2`);
+  console.log(`    'FN' is optional and, if present, marks the key as alternate, triggered by the Fn key`);
+  console.log(`  Keys without pins are ignored`);
+  console.log(`  Lines starting with '#' are ignored`);
+  console.log(`You may switch between Teensy3.2 and TeensyLC by adding  the type as a line.`);
+  process.exit(-1);
 };
 
 // Start entering keys below:
@@ -36,6 +36,8 @@ const PINS = {
 let teensyPins = PINS.TEENSYLC;
 
 const buffer = [];
+// Create a hash where each connection is doubly-linked, 
+// e.g., KEY 1 2 will have a { '1': { '2': key }, '2': { '1': key } }
 const keyMap = keyList.split('\n').reduce((matrix, l) => {
   const line = l.replace(/#.*$/, '').trim().toUpperCase();
   if (!line.length) return matrix;
@@ -54,15 +56,28 @@ const keyMap = keyList.split('\n').reduce((matrix, l) => {
   if (isNaN(pin1) || isNaN(pin2)) {
     return matrix;
   }
-  const [row, col] = matrix[pin2] ? [pin2, pin1] : [pin1, pin2];
-  matrix[row] = { ...matrix[row], [col]: key };
+  matrix[pin1] = { ...matrix[pin1], [pin2]: key };
+  matrix[pin2] = { ...matrix[pin2], [pin1]: key };
   return matrix;
 }, {});
 
+// Sort by longest sets; we'll assume the longest to be the rows, and eliminate duplicates along the way
+const maxKeys = Object.keys(keyMap).sort((a, b) => Object.keys(b).length - Object.keys(a).length);
+for (let i = 0; i < maxKeys.length; i++) {
+  const row = maxKeys[i];
+  Object.keys(keyMap[maxKeys[i]] || {}).forEach((col) => {
+    delete keyMap[col];
+  });
+}
+
+// Get all the "row" pins
 const inputs = Object.keys(keyMap).sort((a, b) => a - b);
-const outputs = Object.keys(Object.keys(keyMap).reduce((out, low) => {
-  return { ...out, ...keyMap[low] };
-}, {})).sort((a, b) => a - b);
+const outputs = [...new Set(Object.keys(keyMap).reduce((outs, row) => 
+  [...outs, ...Object.keys(keyMap[row])]
+, []))].sort((a, b) => a - b);
+
+console.log("Row pins: ", inputs.join(', '));
+console.log("Column pins: ", outputs.join(', '));
 
 if (!inputs.length || !outputs.length) {
   usage(`Please fill out ${process.argv[2]} before running this script`);
@@ -70,7 +85,7 @@ if (!inputs.length || !outputs.length) {
 
 let open = [];
 let last = -1;
-const allPins = Object.keys([].concat(inputs, outputs).reduce((o, i) => Object.assign({}, o, { [i]: true }), {})).sort((a, b) => parseInt(a) - parseInt(b));
+const allPins = [...new Set([...inputs, ...outputs])].sort((a, b) => a - b);
 
 allPins.forEach(pin => {
     const p  = parseInt(pin);
@@ -81,7 +96,8 @@ allPins.forEach(pin => {
 });
 
 if (open.length) {
-  usage(`The following pins are open: ${open.join(',')}`);
+  console.warn(`WARNING: The following FPC pins appear to be unconnected: ${open.join(', ')}`);
+  console.warn('Was everything wired up properly?');
 }
 
 buffer.push(`#ifndef KEYMAP_H\n#define KEYMAP_H`);
@@ -119,7 +135,7 @@ buffer.push(
 );
 
 buffer.push(
-    'int fn_keys[MATRIX_ROWS][MATRIX_COLS] = {\n\t' +
+    'int media[MATRIX_ROWS][MATRIX_COLS] = {\n\t' +
     inputs.map(low => {
        return '{ ' + outputs.map(high => {
            const key = keyMap[low][high];
