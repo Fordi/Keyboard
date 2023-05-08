@@ -25,55 +25,49 @@ if (!fs.existsSync(process.argv[2])) {
 }
 
 const keyList = fs.readFileSync(process.argv[2], { encoding: 'utf-8' });
-// Pin wirings for Frank Adams' matrix decoder board.
+
+// Pin wirings for Frank Adams' matrix decoder boards.
 const PINS = {
   TEENSYLC: [23, 0, 22, 1, 24, 2, 21, 3, 25, 4, 20, 5, 19, 6, 18, 7, 17, 8, 16, 9, 15, 10, 14, 11, 26, 12],
   TEENSY32: [23, 0, 22, 1, 21, 2, 20, 3, 19, 4, 18, 5, 17, 6, 24, 7, 25, 8, 33, 9, 26, 10, 27, 11, 28, 12, 32, 31, 30, 29, 16, 15, 14, 13],
+  TEENSY40: [23, 0, 22, 1, 21, 2, 20, 3, 19, 4, 18, 5, 17, 6, 29, 7, 31, 8, 33, 9, 32, 10, 30, 11, 28, 12, 27, 26, 25, 24, 16, 15, 14, 13],
 };
 
 let teensyPins = PINS.TEENSYLC;
 
 const buffer = [];
 const keyMap = keyList.split('\n').reduce((matrix, l) => {
-    const line = l.replace(/#.*$/, '').trim().toUpperCase();
-    if (!line.length) return matrix;
-    if (PINS[line]) {
-      teensyPins = PINS[line];
-      return matrix;
-    }
-    const parts = l.split(/[\t\s]+/);
-    let fn, pin1, pin2;
-    const name = parts[0];
-    if (parts[1] === 'FN') {
-      fn = true;
-      pin1 = parseInt(parts[2]);
-      pin2 = parseInt(parts[3]);
-    } else {
-      pin1 = parseInt(parts[1]);
-      pin2 = parseInt(parts[2]);
-    }
-    if (isNaN(pin1) || isNaN(pin2)) {
-      return matrix;
-    }
-    const key = { name, fn }
-    if (matrix[pin1] ) {
-       matrix[pin1] = { ...matrix[pin1], [pin2]: key };
-    } else if (matrix[pin2]) {
-       matrix[pin2] = { ...matrix[pin2], [pin1]: key };
-    } else {
-       matrix[pin1] = { [pin2]: key };
-    }
+  const line = l.replace(/#.*$/, '').trim().toUpperCase();
+  if (!line.length) return matrix;
+  if (PINS[line]) {
+    console.log(`Using ${line} board`);
+    teensyPins = PINS[line];
     return matrix;
+  }
+  const [name, ...rest] = l.split(/[\t\s]+/);
+  const key = { name };
+  if (rest[0] === 'FN') {
+    key.fn = true;
+    rest.shift();
+  }
+  const [pin1, pin2] = rest.map(a => parseInt(a)).sort();
+  if (isNaN(pin1) || isNaN(pin2)) {
+    return matrix;
+  }
+  const [row, col] = matrix[pin2] ? [pin2, pin1] : [pin1, pin2];
+  matrix[row] = { ...matrix[row], [col]: key };
+  return matrix;
 }, {});
 
 const inputs = Object.keys(keyMap).sort((a, b) => a - b);
-
 const outputs = Object.keys(Object.keys(keyMap).reduce((out, low) => {
   return { ...out, ...keyMap[low] };
 }, {})).sort((a, b) => a - b);
+
 if (!inputs.length || !outputs.length) {
   usage(`Please fill out ${process.argv[2]} before running this script`);
 }
+
 let open = [];
 let last = -1;
 const allPins = Object.keys([].concat(inputs, outputs).reduce((o, i) => Object.assign({}, o, { [i]: true }), {})).sort((a, b) => parseInt(a) - parseInt(b));
@@ -109,6 +103,7 @@ buffer.push(
   }).join(',\n\t') +
   '\n};'
 );
+
 buffer.push(
     'int modifier[MATRIX_ROWS][MATRIX_COLS] = {\n\t' +
     inputs.map(low => {
@@ -122,6 +117,7 @@ buffer.push(
     }).join(',\n\t') +
     '\n};'
 );
+
 buffer.push(
     'int fn_keys[MATRIX_ROWS][MATRIX_COLS] = {\n\t' +
     inputs.map(low => {

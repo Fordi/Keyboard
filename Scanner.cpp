@@ -120,6 +120,9 @@ void identify(void) {
 #ifdef TEENSYLC
   Keyboard.print("TeensyLC");
 #endif
+#ifdef TEENSY40
+  Keyboard.print("Teensy40");
+#endif
   // Go to end of next line.
   tap(KEY_DOWN);
   to_eol();

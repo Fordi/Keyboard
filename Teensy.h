@@ -23,4 +23,16 @@ int fpc_map[] = {23, 0, 22, 1, 24, 2, 21, 3, 25, 4, 20, 5, 19, 6, 18, 7, 17, 8, 
 
 #endif
 
+#ifdef IMXRT1062
+
+// Teensy 4.0 config
+#define TEENSY40
+
+// Load an array with the Teensy 4.0 I/O numbers that correspond to FPC pins 1 through 34.
+int fpc_map[] = {23, 0, 22, 1, 21, 2, 20, 3, 19, 4, 18, 5, 17, 6, 29, 7, 31, 8, 33, 9, 32, 10, 30, 11, 28, 12, 27, 26, 25, 24, 16, 15, 14, 13};
+// Maximum FPC pin that can be soldered to this microcontroller
+#define HW_MAX_PIN 33
+
+#endif
+
 #endif
