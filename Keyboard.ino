@@ -8,7 +8,7 @@
     controller_init(MATRIX_ROWS, MATRIX_COLS, (int*)Row_IO, (int*)Col_IO);
   }
   void loop() {
-    controller_loop(MATRIX_ROWS, MATRIX_COLS, (int*)normal, (int*)modifier, (int*)fn_keys, (int*)Row_IO, (int*)Col_IO);
+    controller_loop(MATRIX_ROWS, MATRIX_COLS, (int*)normal, (int*)modifier, (int*)media, (int*)Row_IO, (int*)Col_IO);
   }
 #else
   #include "Scanner.h"

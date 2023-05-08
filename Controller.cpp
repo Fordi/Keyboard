@@ -125,7 +125,7 @@ boolean fn_pressed = FALSE;
 extern volatile uint8_t keyboard_leds;
 
 //---------------------------------Main Loop---------------------------------------------
-void controller_loop(int rows, int cols, int* normal, int* modifier, int* fn_keys, int* row_pins, int* col_pins) {
+void controller_loop(int rows, int cols, int* normal, int* modifier, int* media, int* row_pins, int* col_pins) {
 
 // Scan keyboard matrix with an outer loop that drives each row low and an
 // inner loop that reads every column (with pull ups). The routine looks
@@ -179,18 +179,18 @@ void controller_loop(int rows, int cols, int* normal, int* modifier, int* fn_key
 
       // # Fn-modified keys (media)
       if (fn_pressed) {
-        if (fn_keys[index] != 0) {
+        if (media[index] != 0) {
           if (just_pressed) {
             #ifdef USE_SET_MEDIA
-              Keyboard.set_media(medfn_keysia[index]);
+              Keyboard.set_media(media[index]);
             #else
-              set_key(fn_keys[index]);
+              set_key(media[index]);
             #endif
           } else if (just_released) {
             #ifdef USE_SET_MEDIA
               Keyboard.set_media(0);
             #else
-              reset_key(fn_keys[index]);
+              reset_key(media[index]);
             #endif
           }
         }
